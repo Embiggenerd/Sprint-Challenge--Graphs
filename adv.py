@@ -17,7 +17,7 @@ world = World()
 map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
-room_graph=literal_eval(open(map_file, "r").read())
+room_graph = literal_eval(open(map_file, "r").read())
 world.load_graph(room_graph)
 
 # Print an ASCII map
@@ -31,10 +31,10 @@ traversal_path = []
 graph_dict = {}
 
 
-
 # TRAVERSAL TEST - DO NOT MODIFY
 visited_rooms = set()
 player.current_room = world.starting_room
+print('world.starting_room.get_exits()', world.starting_room.get_exits())
 visited_rooms.add(player.current_room)
 
 for move in traversal_path:
@@ -42,12 +42,15 @@ for move in traversal_path:
     visited_rooms.add(player.current_room)
 
 if len(visited_rooms) == len(room_graph):
-    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+    print(
+        f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
 else:
     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
     print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
 
+
 def get_blind_exit_bfs(starting_room):
+    # print('starting_room', starting_room)
     q = []
     visited = set()
     q.append([starting_room])
@@ -55,11 +58,12 @@ def get_blind_exit_bfs(starting_room):
     while len(q) > 0:
         path_to_current_room = q.pop(0)
         current_room = path_to_current_room[-1]
+        # print('current_room', current_room)
         # Here we check if our graph_dict[room] contains any blind exits, in which case we're good and we return path
         # This is what makes this a search, not a traversal
-        for key in graph_dict[current_room]:
-            if graph_dict[current_room][key] == "?":
-                return path_to_current_room
+        print('current_room', current_room)
+        if list(graph_dict[current_room].values()).count('?') != 0:
+            return path_to_current_room
         if current_room not in visited:
             visited.add(current_room)
             # After current room added to visted, we need queue up rooms that needs to check for unexplored exits
@@ -75,10 +79,11 @@ def create_vertex(room):
     room_dict = {}
     for e in room.get_exits():
         room_dict[e] = "?"
-    graph_dict[room.id] = room
+    graph_dict[room.id] = room_dict
 
 # Here we append any room which is unknown to a list, and select
 # one randomly
+
 
 def get_random_blind_exit(room):
     blind = []
@@ -89,20 +94,44 @@ def get_random_blind_exit(room):
 
     return random.choice(blind)
 
+
 def room_has_blind_exits(room):
-    has_blind_exits = False
-    for e in graph_dict[room.id].get_exits():
-        if e == "?":
-            had_blind_exits = True
-            break
-    return has_blind_exits
+    return list(graph_dict[player.current_room.id].values()).count('?') != 0
 
 
 create_vertex(player.current_room)
+# for e, v in graph_dict[0]:
+print('graph_dict', graph_dict[0])
 
 while len(graph_dict) < 500:
+    print('player.current_room', player.current_room)
     if room_has_blind_exits(player.current_room):
-        
+        room_id = player.current_room.id
+        print('player.current_room', player.current_room)
+        ext = get_random_blind_exit(player.current_room)
+        print('ext', ext)
+        player.travel(ext)
+        traversal_path.append(ext)
+        if player.current_room.id not in graph_dict:
+            create_vertex(player.current_room)
+        graph_dict[room_id][ext] = player.current_room.id
+        reverse = {
+            'w': 'e',
+            's': 'n',
+            'e': 'w',
+            'n': 's',
+        }
+        graph_dict[player.current_room.id][reverse[ext]
+                                           ] = room_id
+    else:
+        path = get_blind_exit_bfs(player.current_room.id)
+
+        for r in path:
+            for d in graph_dict[player.current_room.id]:
+                if graph_dict[player.current_room.id][d] == r:
+                    player.travel(d)
+                    traversal_path.append(d)
+                    break
 
 
 # TRAVERSAL TEST - DO NOT MODIFY
