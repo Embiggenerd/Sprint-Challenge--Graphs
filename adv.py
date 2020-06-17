@@ -42,11 +42,10 @@ def get_blind_exit_bfs(starting_room):
         path_to_current_room = q.pop(0)
         print('path_to_current_room', path_to_current_room)
         current_room = path_to_current_room[-1]
-        # print('current_room', current_room)
         # Here we check if our graph_dict[room] contains any blind exits, in which case we're good and we return path
-        # This is what makes this a search, not a traversal
         print('current_room', current_room)
-        if list(graph_dict[current_room].values()).count('?') != 0:
+        # This is what makes this a search, not a traversal
+        if room_has_blind_exits(current_room):
             return path_to_current_room
         if current_room not in visited:
             visited.add(current_room)
@@ -79,18 +78,27 @@ def get_random_blind_exit(room):
     return random.choice(blind)
 
 
-def room_has_blind_exits(room):
-    return list(graph_dict[player.current_room.id].values()).count('?') != 0
+def room_has_blind_exits(room_id):
+    return list(graph_dict[room_id].values()).count('?') != 0
+
+def traverse_directions_from_path(path):
+    for r in path:
+        # We need to get directions from a list of room numbers, so we look up
+        # the directions in graph_dict[current_room.id], and a direction matches up
+        # with a room number in our path, we go in that direction 
+        for d in graph_dict[player.current_room.id]:
+            if graph_dict[player.current_room.id][d] == r:
+                player.travel(d)
+                traversal_path.append(d)
+                break
 
 
 create_vertex(player.current_room)
-# for e, v in graph_dict[0]:
 print('graph_dict', graph_dict[0])
 
 while len(graph_dict) < 500:
     print('player.current_room', player.current_room)
-    # if room_has_blind_exits(player.current_room):
-    if list(graph_dict[player.current_room.id].values()).count('?') != 0:
+    if room_has_blind_exits(player.current_room.id):
         room_id = player.current_room.id
         print('player.current_room', player.current_room)
         ext = get_random_blind_exit(player.current_room)
@@ -120,15 +128,7 @@ while len(graph_dict) < 500:
         # is our way of ensuring that all paths are mapped in graph_dict
         path = get_blind_exit_bfs(player.current_room.id)
         print('path', path, player.current_room.id)
-        for r in path:
-            # We need to get directions from a list of room numbers, so we look up
-            # the directions in graph_dict[current_room.id], and a direction matches up
-            # with a room number in our path, we go in that direction 
-            for d in graph_dict[player.current_room.id]:
-                if graph_dict[player.current_room.id][d] == r:
-                    player.travel(d)
-                    traversal_path.append(d)
-                    break
+        traverse_directions_from_path(path)
 
 # TRAVERSAL TEST - DO NOT MODIFY
 visited_rooms = set()
