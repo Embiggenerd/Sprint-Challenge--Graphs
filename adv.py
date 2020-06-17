@@ -31,31 +31,16 @@ traversal_path = []
 graph_dict = {}
 
 
-# TRAVERSAL TEST - DO NOT MODIFY
-visited_rooms = set()
-player.current_room = world.starting_room
-visited_rooms.add(player.current_room)
-
-for move in traversal_path:
-    player.travel(move)
-    visited_rooms.add(player.current_room)
-
-if len(visited_rooms) == len(room_graph):
-    print(
-        f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
-else:
-    print("TESTS FAILED: INCOMPLETE TRAVERSAL")
-    print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
-
-
 def get_blind_exit_bfs(starting_room):
     # print('starting_room', starting_room)
     q = []
     visited = set()
     q.append([starting_room])
+    print('q', q)
     # BFS algo
     while len(q) > 0:
         path_to_current_room = q.pop(0)
+        print('path_to_current_room', path_to_current_room)
         current_room = path_to_current_room[-1]
         # print('current_room', current_room)
         # Here we check if our graph_dict[room] contains any blind exits, in which case we're good and we return path
@@ -67,9 +52,11 @@ def get_blind_exit_bfs(starting_room):
             visited.add(current_room)
             # After current room added to visted, we need queue up rooms that needs to check for unexplored exits
             # Important to remember, that we are exploring the already explored graph that we are building, not
-            # trabeling in breadth first fashion
-            for room in graph_dict[current_room]:
+            # traveling in breadth first fashion
+            # This was the bug, I did not have.values
+            for room in graph_dict[current_room].values():
                 q.append([*path_to_current_room, room])
+
 
 # This step creates a room in our graph_dict
 def create_vertex(room):
@@ -80,6 +67,8 @@ def create_vertex(room):
 
 # Here we append any room which is unknown to a list, and select
 # one randomly
+
+
 def get_random_blind_exit(room):
     blind = []
     for e in room.get_exits():
@@ -130,14 +119,32 @@ while len(graph_dict) < 500:
         # room with any '?' for exits. It will traverse entire graph, and this
         # is our way of ensuring that all paths are mapped in graph_dict
         path = get_blind_exit_bfs(player.current_room.id)
-        print('path', path)
+        print('path', path, player.current_room.id)
         for r in path:
+            # We need to get directions from a list of room numbers, so we look up
+            # the directions in graph_dict[current_room.id], and a direction matches up
+            # with a room number in our path, we go in that direction 
             for d in graph_dict[player.current_room.id]:
                 if graph_dict[player.current_room.id][d] == r:
                     player.travel(d)
                     traversal_path.append(d)
                     break
 
+# TRAVERSAL TEST - DO NOT MODIFY
+visited_rooms = set()
+player.current_room = world.starting_room
+visited_rooms.add(player.current_room)
+
+for move in traversal_path:
+    player.travel(move)
+    visited_rooms.add(player.current_room)
+
+if len(visited_rooms) == len(room_graph):
+    print(
+        f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+else:
+    print("TESTS FAILED: INCOMPLETE TRAVERSAL")
+    print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
 
 #######
 # UNCOMMENT TO WALK AROUND
