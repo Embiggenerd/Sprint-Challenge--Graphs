@@ -17,7 +17,7 @@ world = World()
 map_file = "maps/main_maze.txt"
 
 # Loads the map into a dictionary
-room_graph=literal_eval(open(map_file, "r").read())
+room_graph = literal_eval(open(map_file, "r").read())
 world.load_graph(room_graph)
 
 # Print an ASCII map
@@ -41,10 +41,12 @@ for move in traversal_path:
     visited_rooms.add(player.current_room)
 
 if len(visited_rooms) == len(room_graph):
-    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+    print(
+        f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
 else:
     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
     print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
+
 
 def get_blind_exit_bfs(starting_room):
     # print('starting_room', starting_room)
@@ -70,8 +72,6 @@ def get_blind_exit_bfs(starting_room):
                 q.append([*path_to_current_room, room])
 
 # This step creates a room in our graph_dict
-
-
 def create_vertex(room):
     room_dict = {}
     for e in room.get_exits():
@@ -80,8 +80,6 @@ def create_vertex(room):
 
 # Here we append any room which is unknown to a list, and select
 # one randomly
-
-
 def get_random_blind_exit(room):
     blind = []
     for e in room.get_exits():
@@ -102,7 +100,8 @@ print('graph_dict', graph_dict[0])
 
 while len(graph_dict) < 500:
     print('player.current_room', player.current_room)
-    if room_has_blind_exits(player.current_room):
+    # if room_has_blind_exits(player.current_room):
+    if list(graph_dict[player.current_room.id].values()).count('?') != 0:
         room_id = player.current_room.id
         print('player.current_room', player.current_room)
         ext = get_random_blind_exit(player.current_room)
@@ -111,18 +110,27 @@ while len(graph_dict) < 500:
         traversal_path.append(ext)
         if player.current_room.id not in graph_dict:
             create_vertex(player.current_room)
+        # This is the important part - after going into new room, assign
+        # new room's id to the random exit you took in old room
         graph_dict[room_id][ext] = player.current_room.id
+
         reverse = {
             'w': 'e',
             's': 'n',
             'e': 'w',
             'n': 's',
         }
+        # Looking back at old room, the entrance we took to this room
+        # is the old room's exit. If we take S to get here, here the
+        # enterence was N, so we flip the direction and assign it to old room
         graph_dict[player.current_room.id][reverse[ext]
                                            ] = room_id
     else:
+        # This BFT solution will assign to path the path to the nearest
+        # room with any '?' for exits. It will traverse entire graph, and this
+        # is our way of ensuring that all paths are mapped in graph_dict
         path = get_blind_exit_bfs(player.current_room.id)
-
+        print('path', path)
         for r in path:
             for d in graph_dict[player.current_room.id]:
                 if graph_dict[player.current_room.id][d] == r:
